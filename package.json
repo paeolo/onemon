@@ -1,6 +1,6 @@
 {
   "name": "onemon",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Run a npm script as a deamon, once",
   "main": "index.js",
   "author": "Paul Le Couteur",
@@ -13,6 +13,7 @@
     "ipc",
     "socket"
   ],
+  "repository": "github:paeolo/onemon",
   "scripts": {
     "build": "tsc && chmod +x ./dist/cli.js",
     "deamon": "node examples/deamon.js",
