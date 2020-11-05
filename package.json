@@ -1,8 +1,8 @@
 {
   "name": "onemon",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Run a npm script as a deamon, once",
-  "main": "./dist/cli.js",
+  "main": "dist/cli.js",
   "author": "Paul Le Couteur",
   "license": "MIT",
   "keywords": [
@@ -20,7 +20,7 @@
     "script": "node examples/listener.js"
   },
   "bin": {
-    "onemon": "./dist/cli.js"
+    "onemon": "dist/cli.js"
   },
   "dependencies": {
     "@crussell52/socket-ipc": "^0.4.0",
