@@ -20,7 +20,7 @@ export default async (input: string[], flags: FlagsType) => {
   switch (command.type) {
     case CommandType.RUN:
       assertIsDefined('deamon', command.deamon);
-      await run(command.deamon, command.script);
+      await run(command.deamon, command.script, flags.silent);
       break;
     case CommandType.KILL:
       assertIsDefined('deamon', command.deamon);

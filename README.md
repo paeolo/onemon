@@ -36,6 +36,10 @@ Imagine you have a big monorepo and you want a bundler to watch for any changes.
 - You may also run `onemon bundler:watch` if you just want to run the deamon.
 - You will always have on deamon: onemon.
 
+### Flags
+
+- --silent (-s) |> don't attach deamon output
+
 ## Author
 
 👤 **Paul Le Couteur**

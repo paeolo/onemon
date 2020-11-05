@@ -1,5 +1,5 @@
 import path from 'path';
-import fs from 'fs';
+import fs, { copyFile } from 'fs';
 import { fork } from 'child_process';
 import * as exits from 'exits';
 
@@ -11,12 +11,20 @@ export enum SocketMessageType {
   CLOSE = 'CLOSE'
 }
 
+interface RunOptions {
+  client: any;
+  socket: string;
+  pkgScript?: string;
+  script?: string;
+  silent?: boolean;
+};
+
 export const READY_MSG = 'READY_MSG';
 
 const xpipe = require('xpipe');
 const IPCClient = require('@crussell52/socket-ipc').Client;
 
-export const run = async (deamon: string, script?: string) => {
+export const run = async (deamon: string, script?: string, silent?: boolean) => {
   exits.attach();
 
   let client: any;
@@ -34,12 +42,12 @@ export const run = async (deamon: string, script?: string) => {
       proc.disconnect();
       proc.unref();
       client = await createClient(pkg, socket);
-      await runScript(client, socket, pkgScript, script);
+      await runScript({ client, socket, pkgScript, script, silent });
     });
   }
   else {
     client = await createClient(pkg, socket);
-    await runScript(client, socket, pkgScript, script);
+    await runScript({ client, socket, pkgScript, script, silent });
   }
 }
 
@@ -56,7 +64,15 @@ export const kill = async (deamon: string) => {
   client.connect();
 }
 
-const runScript = async (client: any, socket: string, pkgScript?: string, script?: string) => {
+const runScript = async (options: RunOptions) => {
+
+  const {
+    client,
+    socket,
+    pkgScript,
+    script,
+    silent
+  } = options;
 
   client.on('connect', () => {
     console.log(`IPC connected on ${socket}`);
@@ -65,9 +81,11 @@ const runScript = async (client: any, socket: string, pkgScript?: string, script
       npm().stdio('inherit').cwd(pkgScript).spawn(script);
     }
 
-    client.on(`message.${SocketMessageType.PRINT}`, (message: any) => {
-      process.stdout.write(Buffer.from(message.data))
-    });
+    if (!silent) {
+      client.on(`message.${SocketMessageType.PRINT}`, (message: any) => {
+        process.stdout.write(Buffer.from(message.data))
+      });
+    }
   });
 
   client.on('disconnect', () => {

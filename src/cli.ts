@@ -13,6 +13,10 @@ const cli = meow(`
     - start (default) |> start the deamon and launch script with deamon attached
 `, {
   flags: {
+    silent: {
+      type: 'boolean',
+      alias: 's',
+    },
   },
 });
 
