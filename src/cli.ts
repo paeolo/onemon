@@ -16,8 +16,9 @@ const cli = meow(`
   },
 });
 
-if (cli.input.length === 0)
-  cli.showHelp();
+if (cli.input.length === 0) {
+  cli.showHelp(0);
+}
 
 export type FlagsType = typeof cli.flags;
 
