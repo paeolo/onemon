@@ -6,7 +6,7 @@ import {
   SocketMessageType,
   READY_MSG
 } from './deamonize';
-import { Socket } from 'dgram';
+import { Socket } from 'net';
 
 const main = async () => {
   let proc: ChildProcess;

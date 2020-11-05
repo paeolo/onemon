@@ -1,5 +1,5 @@
 import path from 'path';
-import fs, { copyFile } from 'fs';
+import fs from 'fs';
 import { fork } from 'child_process';
 import * as exits from 'exits';
 
@@ -11,12 +11,11 @@ export enum SocketMessageType {
   CLOSE = 'CLOSE'
 }
 
-interface RunOptions {
-  client: any;
+interface ConnectOptions {
   socket: string;
-  pkgScript?: string;
-  script?: string;
-  silent?: boolean;
+  pkg: string;
+  deamon: string;
+  retry?: boolean;
 };
 
 export const READY_MSG = 'READY_MSG';
@@ -25,100 +24,104 @@ const xpipe = require('xpipe');
 const IPCClient = require('@crussell52/socket-ipc').Client;
 
 export const run = async (deamon: string, script?: string, silent?: boolean) => {
-  exits.attach();
-
-  let client: any;
-  let pkgScript: string | undefined;
   const pkg = await getPKG(deamon);
   const socket = getSocketName(deamon);
+
+  let pkgScript: string | undefined;
 
   if (script)
     pkgScript = await getPKG(script);
 
-  const proc = await createDeamonIfNeeded(deamon, pkg, socket);
+  const client = await connectToDeamon({ socket, pkg, deamon, retry: true });
 
-  if (proc) {
-    proc.once('message', async () => {
-      proc.disconnect();
-      proc.unref();
-      client = await createClient(pkg, socket);
-      await runScript({ client, socket, pkgScript, script, silent });
+  console.log(`IPC connected on ${socket}`);
+
+  exits.attach();
+  exits.add(() => client.close());
+
+  if (script && pkgScript) {
+    npm().stdio('inherit').cwd(pkgScript).spawn(script);
+  }
+
+  if (!silent) {
+    client.on(`message.${SocketMessageType.PRINT}`, (message: any) => {
+      process.stdout.write(Buffer.from(message.data))
     });
   }
-  else {
-    client = await createClient(pkg, socket);
-    await runScript({ client, socket, pkgScript, script, silent });
-  }
-}
-
-export const kill = async (deamon: string) => {
-  const pkg = await getPKG(deamon);
-  const socket = getSocketName(deamon)
-  const client = await createClient(pkg, socket);
-
-  client.on('connect', async () => {
-    client.send(SocketMessageType.CLOSE);
-    client.close();
-  });
-
-  client.connect();
-}
-
-const runScript = async (options: RunOptions) => {
-
-  const {
-    client,
-    socket,
-    pkgScript,
-    script,
-    silent
-  } = options;
-
-  client.on('connect', () => {
-    console.log(`IPC connected on ${socket}`);
-
-    if (script && pkgScript) {
-      npm().stdio('inherit').cwd(pkgScript).spawn(script);
-    }
-
-    if (!silent) {
-      client.on(`message.${SocketMessageType.PRINT}`, (message: any) => {
-        process.stdout.write(Buffer.from(message.data))
-      });
-    }
-  });
 
   client.on('disconnect', () => {
     console.log(`IPC disconnected from ${socket}`)
   });
-
-  client.connect();
 }
 
-const createDeamonIfNeeded = async (deamon: string, pkg: string, socket: string) => {
+export const kill = async (deamon: string) => {
+  const pkg = await getPKG(deamon);
+  const socket = getSocketName(deamon);
+
+  const client = await connectToDeamon({ socket, pkg, deamon, retry: false });
+
+  exits.attach();
+  exits.add(() => client.close());
+
+  client.send(SocketMessageType.CLOSE);
+  client.close();
+}
+
+const connectToDeamon = async (options: ConnectOptions) => {
+  const {
+    pkg,
+    socket,
+    retry
+  } = options;
+
   const socketFile = xpipe.eq(path.join(pkg, socket));
+
   try {
     fs.accessSync(socketFile, fs.constants.F_OK);
-    return;
+    return await connectToSocket(socketFile);
+
   } catch (error) {
-    return fork(
+    if (retry) {
+      await createDeamon(options);
+      return connectToSocket(socketFile);
+    }
+  }
+}
+
+const connectToSocket = (socketFile: string) =>
+  new Promise<any>((resolve, reject) => {
+    const client = new IPCClient({ socketFile: socketFile });
+
+    client.on('connectError', () => {
+      client.close();
+      reject();
+    });
+    client.on('connect', () => resolve(client));
+
+    client.connect();
+  });
+
+const createDeamon = async (options: ConnectOptions) =>
+  new Promise((resolve) => {
+    const {
+      deamon,
+      pkg,
+      socket,
+    } = options;
+
+    const proc = fork(
       path.join(__dirname, 'deamon.js'),
       [deamon, socket],
       {
         detached: true,
         stdio: 'ignore',
         cwd: pkg,
-      });
-  }
-}
+      }
+    );
 
-const createClient = async (pkg: string, socket: string) => {
-  const socketFile = xpipe.eq(path.join(pkg, socket));
-  const client = new IPCClient({ socketFile: socketFile });
-
-  exits.add(() => {
-    client.close();
+    proc.once('message', async () => {
+      proc.disconnect();
+      proc.unref();
+      resolve();
+    });
   });
-
-  return client;
-}
