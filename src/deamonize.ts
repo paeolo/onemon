@@ -3,13 +3,17 @@ import fs from 'fs';
 import { fork } from 'child_process';
 import * as exits from 'exits';
 
-import npm from './npm';
-import { getPKG, getSocketName } from './manager';
+import shell from './shell';
+import {
+  getPKG,
+  getShellScript,
+  getSocketName
+} from './manager';
 
 export enum SocketMessageType {
   PRINT = 'PRINT',
   CLOSE = 'CLOSE'
-}
+};
 
 interface ConnectOptions {
   socket: string;
@@ -28,9 +32,12 @@ export const run = async (deamon: string, script?: string, silent?: boolean) => 
   const socket = getSocketName(deamon);
 
   let pkgScript: string | undefined;
+  let shellScript: string | undefined;
 
-  if (script)
+  if (script) {
     pkgScript = await getPKG(script);
+    shellScript = getShellScript(pkgScript, script);
+  }
 
   const client = await connectToDeamon({ socket, pkg, deamon, retry: true });
 
@@ -39,8 +46,8 @@ export const run = async (deamon: string, script?: string, silent?: boolean) => 
   exits.attach();
   exits.add(() => client.close());
 
-  if (script && pkgScript) {
-    npm().stdio('inherit').cwd(pkgScript).spawn(script);
+  if (pkgScript && shellScript) {
+    shell({ stdio: 'inherit', cwd: pkgScript }).spawn(shellScript);
   }
 
   if (!silent) {
@@ -109,9 +116,11 @@ const createDeamon = async (options: ConnectOptions) =>
       socket,
     } = options;
 
+    const shellScript = getShellScript(pkg, deamon);
+
     const proc = fork(
       path.join(__dirname, 'deamon.js'),
-      [deamon, socket],
+      [shellScript, socket],
       {
         detached: true,
         stdio: 'ignore',

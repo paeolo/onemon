@@ -21,6 +21,17 @@ export const getPKG = async (script: string) => {
   return result;
 }
 
+export const getShellScript = (pkg: string, script: string) => {
+  const pkgJSON = require(`${pkg}/package.json`);
+
+  assert(
+    pkgJSON.scripts && pkgJSON.scripts[script],
+    `Couldn't find a script called "${script}"`
+  );
+
+  return pkgJSON.scripts[script];
+}
+
 export const getHash = (deamon: string) => {
   return crypto
     .createHash('sha1')

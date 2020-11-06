@@ -1,5 +1,5 @@
 import * as exits from 'exits';
-import npm from './npm';
+import shell from './shell';
 
 import { ChildProcess } from 'child_process';
 import {
@@ -20,7 +20,7 @@ const main = async () => {
 
   const xpipe = require('xpipe');
   const IPCServer = require('@crussell52/socket-ipc').Server;
-  const script = process.argv[2];
+  const shellScript = process.argv[2];
   const socket = process.argv[3];
 
   const socketFile = xpipe.eq(socket);
@@ -36,11 +36,13 @@ const main = async () => {
     });
   });
 
-  server.on(
-    `message.${SocketMessageType.CLOSE}`,
-    () => {
-      server.close();
-    });
+  server.on(`message.${SocketMessageType.CLOSE}`, () => server.close());
+
+  server.on('close', () => {
+    if (proc)
+      proc.kill();
+    process.exit();
+  });
 
   server.on('listening', () => {
     console.log(`IPC listening on ${socket}`);
@@ -56,17 +58,11 @@ const main = async () => {
       1000
     );
 
-    proc = npm().stdio('pipe').spawn(script);
+    proc = shell({ stdio: 'pipe' }).spawn(shellScript);
 
     if (proc.stdout)
       proc.stdout.on('data', chunk => { server.broadcast(SocketMessageType.PRINT, chunk) });
   });
-
-  server.on('close', () => {
-    if (proc)
-      proc.kill();
-    process.exit();
-  })
 
   server.listen();
 }
