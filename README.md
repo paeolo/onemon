@@ -38,9 +38,9 @@ Imagine you have a big monorepo and you want a bundler to watch for any changes.
 
 ### Flags
 
-- --silent (-s) |> don't attach deamon output
+- --silent (-s) |> Don't attach to the deamon output.
+- --wait (-w) |> Wait for the deamon to call notifyReady() before launching the script.
 
 ## Author
 
 👤 **Paul Le Couteur**
-

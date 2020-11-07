@@ -65,7 +65,10 @@ export const run = async (deamon: string, options: RunOptions) => {
 
     const pkgScript = await getPKG(script);
     const shellScript = getShellScript(pkgScript, script);
-    shell({ stdio: 'inherit', cwd: pkgScript }).spawn(shellScript);
+
+    shell({ stdio: 'inherit', cwd: pkgScript })
+      .spawn(shellScript)
+      .on('exit', (code: number) => exits.terminate('exit', code));
   }
 
   client.on('disconnect', () => {
