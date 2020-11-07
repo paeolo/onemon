@@ -1,8 +1,9 @@
 {
   "name": "onemon",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Run a npm script as a deamon, once",
-  "main": "dist/cli.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "author": "Paul Le Couteur",
   "license": "MIT",
   "keywords": [

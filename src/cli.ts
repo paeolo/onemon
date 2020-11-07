@@ -2,7 +2,9 @@
 
 import meow from 'meow';
 import chalk from 'chalk';
-import main from '.';
+import program from '.';
+
+import { getCommand } from './getCommand';
 
 const cli = meow(`
   Usage
@@ -17,6 +19,10 @@ const cli = meow(`
       type: 'boolean',
       alias: 's',
     },
+    wait: {
+      type: 'boolean',
+      alias: 'w',
+    },
   },
 });
 
@@ -26,7 +32,12 @@ if (cli.input.length === 0) {
 
 export type FlagsType = typeof cli.flags;
 
-main(cli.input, cli.flags)
+const main = async () => {
+  const command = getCommand(cli.input);
+  await program(command, cli.flags);
+}
+
+main()
   .catch((err: Error) => {
     console.error(chalk.yellow(err.message));
     process.exit(1);

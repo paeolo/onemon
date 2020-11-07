@@ -1,4 +1,16 @@
-import { Command, CommandType } from ".";
+/**
+ * @module
+ */
+export enum CommandType {
+  KILL = 'kill',
+  RUN = 'run'
+};
+
+export interface Command {
+  type: CommandType,
+  deamon: string,
+  script?: string
+};
 
 export const getCommand = (input: string[]): Command => {
 

@@ -10,9 +10,14 @@ import {
   getSocketName
 } from './manager';
 
-export enum SocketMessageType {
+export const enum SocketMessageType {
   PRINT = 'PRINT',
-  CLOSE = 'CLOSE'
+  CLOSE = 'CLOSE',
+  DEAMON_READY = 'DEAMON_READY'
+};
+
+export const enum IPCMessageType {
+  SERVER_READY = 'SERVER_READY',
 };
 
 interface ConnectOptions {
@@ -22,22 +27,24 @@ interface ConnectOptions {
   retry?: boolean;
 };
 
-export const READY_MSG = 'READY_MSG';
+interface RunOptions {
+  script?: string;
+  silent?: boolean;
+  wait?: boolean;
+};
 
 const xpipe = require('xpipe');
 const IPCClient = require('@crussell52/socket-ipc').Client;
 
-export const run = async (deamon: string, script?: string, silent?: boolean) => {
-  const pkg = await getPKG(deamon);
+export const run = async (deamon: string, options: RunOptions) => {
+  const {
+    script,
+    silent,
+    wait
+  } = options;
+
   const socket = getSocketName(deamon);
-
-  let pkgScript: string | undefined;
-  let shellScript: string | undefined;
-
-  if (script) {
-    pkgScript = await getPKG(script);
-    shellScript = getShellScript(pkgScript, script);
-  }
+  const pkg = await getPKG(deamon);
 
   const client = await connectToDeamon({ socket, pkg, deamon, retry: true });
 
@@ -46,14 +53,19 @@ export const run = async (deamon: string, script?: string, silent?: boolean) => 
   exits.attach();
   exits.add(() => client.close());
 
-  if (pkgScript && shellScript) {
-    shell({ stdio: 'inherit', cwd: pkgScript }).spawn(shellScript);
-  }
-
   if (!silent) {
     client.on(`message.${SocketMessageType.PRINT}`, (message: any) => {
       process.stdout.write(Buffer.from(message.data))
     });
+  }
+
+  if (script) {
+    if (wait)
+      await deamonIsReady(client);
+
+    const pkgScript = await getPKG(script);
+    const shellScript = getShellScript(pkgScript, script);
+    shell({ stdio: 'inherit', cwd: pkgScript }).spawn(shellScript);
   }
 
   client.on('disconnect', () => {
@@ -76,8 +88,8 @@ export const kill = async (deamon: string) => {
 
 const connectToDeamon = async (options: ConnectOptions) => {
   const {
-    pkg,
     socket,
+    pkg,
     retry
   } = options;
 
@@ -111,9 +123,9 @@ const connectToSocket = (socketFile: string) =>
 const createDeamon = async (options: ConnectOptions) =>
   new Promise((resolve) => {
     const {
-      deamon,
-      pkg,
       socket,
+      pkg,
+      deamon,
     } = options;
 
     const shellScript = getShellScript(pkg, deamon);
@@ -128,9 +140,18 @@ const createDeamon = async (options: ConnectOptions) =>
       }
     );
 
-    proc.once('message', async () => {
-      proc.disconnect();
-      proc.unref();
-      resolve();
+    proc.on('message', async message => {
+      if (message === IPCMessageType.SERVER_READY) {
+        proc.disconnect();
+        proc.unref();
+        resolve();
+      }
     });
   });
+
+const deamonIsReady = (client: any) => new Promise(
+  resolve => client.on(
+    `message.${SocketMessageType.DEAMON_READY}`,
+    () => resolve()
+  )
+);

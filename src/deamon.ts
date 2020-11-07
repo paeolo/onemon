@@ -2,11 +2,19 @@ import * as exits from 'exits';
 import shell from './shell';
 
 import { ChildProcess } from 'child_process';
+import { Socket } from 'net';
 import {
   SocketMessageType,
-  READY_MSG
+  IPCMessageType,
 } from './deamonize';
-import { Socket } from 'net';
+import { checkReady } from './wait';
+
+const startListening = (server: any) => new Promise((resolve, reject) => {
+  server.on('listening', () => resolve());
+  server.on('error', (err: Error) => reject(err));
+
+  server.listen();
+});
 
 const main = async () => {
   let proc: ChildProcess;
@@ -20,8 +28,10 @@ const main = async () => {
 
   const xpipe = require('xpipe');
   const IPCServer = require('@crussell52/socket-ipc').Server;
-  const shellScript = process.argv[2];
-  const socket = process.argv[3];
+  const [
+    shellScript,
+    socket,
+  ] = process.argv.slice(2);
 
   const socketFile = xpipe.eq(socket);
   const server = new IPCServer({ socketFile: socketFile });
@@ -44,27 +54,31 @@ const main = async () => {
     process.exit();
   });
 
-  server.on('listening', () => {
-    console.log(`IPC listening on ${socket}`);
+  await startListening(server);
 
-    if (process.send)
-      process.send(READY_MSG);
+  console.log(`IPC listening on ${socket}`);
 
-    setTimeout(
-      () => {
-        if (clientCount === 0)
-          throw new Error('No one connected within the second.')
-      },
-      1000
-    );
+  if (process.send)
+    process.send(IPCMessageType.SERVER_READY);
 
-    proc = shell({ stdio: 'pipe' }).spawn(shellScript);
+  setTimeout(
+    () => {
+      if (clientCount === 0)
+        throw new Error('No one connected within the second.')
+    },
+    1000
+  );
 
-    if (proc.stdout)
-      proc.stdout.on('data', chunk => { server.broadcast(SocketMessageType.PRINT, chunk) });
-  });
+  proc = shell({ stdio: 'pipe' }).spawn(shellScript);
 
-  server.listen();
+  if (proc.stdout) {
+    proc.stdout.on('data', chunk => {
+      if (checkReady(chunk))
+        server.broadcast(SocketMessageType.DEAMON_READY);
+      else
+        server.broadcast(SocketMessageType.PRINT, chunk)
+    });
+  }
 }
 
 if (require.main === module) {

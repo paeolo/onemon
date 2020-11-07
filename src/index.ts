@@ -1,26 +1,25 @@
-import { FlagsType } from './cli';
-import { getCommand } from './getCommand';
 import { assertIsDefined } from './utils';
-import { run, kill } from './deamonize'
-export enum CommandType {
-  KILL = 'kill',
-  RUN = 'run'
-}
+import { FlagsType } from './cli';
+import {
+  Command,
+  CommandType
+} from './getCommand';
+import {
+  run,
+  kill
+} from './deamonize';
 
-export interface Command {
-  type: CommandType,
-  deamon: string,
-  script?: string
-}
+export { notifyReady } from './wait';
 
-export default async (input: string[], flags: FlagsType) => {
-
-  const command = getCommand(input);
+export default async (command: Command, flags: FlagsType) => {
 
   switch (command.type) {
     case CommandType.RUN:
       assertIsDefined('deamon', command.deamon);
-      await run(command.deamon, command.script, flags.silent);
+      await run(
+        command.deamon,
+        { script: command.script, silent: flags.silent, wait: flags.wait }
+      );
       break;
     case CommandType.KILL:
       assertIsDefined('deamon', command.deamon);
