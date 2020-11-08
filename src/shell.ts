@@ -1,9 +1,10 @@
-import { spawn, SpawnOptions } from 'child_process';
-
-type STDIOType = 'ignore' | 'inherit' | 'pipe';
+import {
+  spawn,
+  SpawnOptions, StdioOptions
+} from 'child_process';
 
 interface ShellOptions {
-  stdio: STDIOType;
+  stdio: StdioOptions;
   cwd?: string;
 };
 

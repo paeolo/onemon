@@ -69,16 +69,18 @@ const main = async () => {
     1000
   );
 
-  proc = shell({ stdio: 'pipe' }).spawn(shellScript);
+  proc = shell({ stdio: ['pipe', 'pipe', 'pipe', 'pipe'] })
+    .spawn(shellScript);
 
-  if (proc.stdout) {
-    proc.stdout.on('data', chunk => {
+  if (proc.stdio[3]) {
+    proc.stdio[3].on('data', chunk => {
       if (checkReady(chunk))
         server.broadcast(SocketMessageType.DEAMON_READY);
-      else
-        server.broadcast(SocketMessageType.PRINT, chunk)
     });
   }
+
+  if (proc.stdout)
+    proc.stdout.on('data', chunk => server.broadcast(SocketMessageType.PRINT, chunk));
 }
 
 if (require.main === module) {
