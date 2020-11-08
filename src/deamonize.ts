@@ -60,11 +60,11 @@ export const run = async (deamon: string, options: RunOptions) => {
   }
 
   if (script) {
-    if (wait)
-      await deamonIsReady(client);
-
     const pkgScript = await getPKG(script);
     const shellScript = getShellScript(pkgScript, script);
+
+    if (wait)
+      await deamonIsReady(client);
 
     shell({ stdio: 'inherit', cwd: pkgScript })
       .spawn(shellScript)
