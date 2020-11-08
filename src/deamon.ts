@@ -7,7 +7,6 @@ import {
   SocketMessageType,
   IPCMessageType,
 } from './deamonize';
-import { checkReady } from './wait';
 
 const startListening = (server: any) => new Promise((resolve, reject) => {
   server.on('listening', () => resolve());
@@ -69,15 +68,12 @@ const main = async () => {
     1000
   );
 
-  proc = shell({ stdio: ['pipe', 'pipe', 'pipe', 'pipe'] })
-    .spawn(shellScript);
+  proc = shell({ stdio: ['pipe', 'pipe', 'pipe', 'ipc'] }).spawn(shellScript);
 
-  if (proc.stdio[3]) {
-    proc.stdio[3].on('data', chunk => {
-      if (checkReady(chunk))
-        server.broadcast(SocketMessageType.DEAMON_READY);
-    });
-  }
+  proc.on('message', message => {
+    if (message === IPCMessageType.DEAMON_READY)
+      server.broadcast(SocketMessageType.DEAMON_READY);
+  });
 
   if (proc.stdout)
     proc.stdout.on('data', chunk => server.broadcast(SocketMessageType.PRINT, chunk));

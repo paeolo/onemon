@@ -18,6 +18,7 @@ export const enum SocketMessageType {
 
 export const enum IPCMessageType {
   SERVER_READY = 'SERVER_READY',
+  DEAMON_READY = 'DEAMON_READY'
 };
 
 interface ConnectOptions {
@@ -143,7 +144,7 @@ const createDeamon = async (options: ConnectOptions) =>
       }
     );
 
-    proc.on('message', async message => {
+    proc.on('message', message => {
       if (message === IPCMessageType.SERVER_READY) {
         proc.disconnect();
         proc.unref();
