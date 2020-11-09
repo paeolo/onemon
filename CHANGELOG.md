@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.2] - 2020-11-08
 
+### WARNING
+THIS VERSION IS BUGGED. PLEASE USE 1.1.3 INSTEAD.
+
 ### Changed
 
 - bugfix. write "DEAMON_READY" in dedicated fd instead of stdout.
