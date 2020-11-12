@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import chalk from 'chalk';
 import { fork } from 'child_process';
 import * as exits from 'exits';
 
@@ -21,10 +22,16 @@ export const enum IPCMessageType {
   DEAMON_READY = 'DEAMON_READY'
 };
 
+export const enum SerializedBoolean {
+  TRUE = 'TRUE',
+  FALSE = 'FALSE'
+}
+
 interface ConnectOptions {
   socket: string;
   pkg: string;
   deamon: string;
+  waitDeamonReady?: boolean;
   retry?: boolean;
 };
 
@@ -47,9 +54,15 @@ export const run = async (deamon: string, options: RunOptions) => {
   const socket = getSocketName(deamon);
   const pkg = await getPKG(deamon);
 
-  const client = await connectToDeamon({ socket, pkg, deamon, retry: true });
+  const [client, deamonIsReady] = await connectToDeamon({
+    socket,
+    pkg,
+    deamon,
+    waitDeamonReady: wait,
+    retry: true
+  });
 
-  console.log(`IPC connected on ${socket}`);
+  console.log(chalk.yellow(`[ONEMON] IPC connected on ${socket}`));
 
   exits.attach();
   exits.add(() => client.close());
@@ -65,7 +78,9 @@ export const run = async (deamon: string, options: RunOptions) => {
     const shellScript = getShellScript(pkgScript, script);
 
     if (wait)
-      await deamonIsReady(client);
+      await deamonIsReady;
+
+    console.log(chalk.yellowBright(`[ONEMON] Launching '${script}'`));
 
     shell({ stdio: 'inherit', cwd: pkgScript })
       .spawn(shellScript)
@@ -119,8 +134,15 @@ const connectToSocket = (socketFile: string) =>
       client.close();
       reject();
     });
-    client.on('connect', () => resolve(client));
 
+    const deamonIsReady = new Promise(
+      resolve => client.on(
+        `message.${SocketMessageType.DEAMON_READY}`,
+        () => resolve()
+      )
+    );
+
+    client.on('connect', () => resolve([client, deamonIsReady]));
     client.connect();
   });
 
@@ -130,13 +152,18 @@ const createDeamon = async (options: ConnectOptions) =>
       socket,
       pkg,
       deamon,
+      waitDeamonReady
     } = options;
 
     const shellScript = getShellScript(pkg, deamon);
 
     const proc = fork(
       path.join(__dirname, 'deamon.js'),
-      [shellScript, socket],
+      [
+        shellScript,
+        socket,
+        waitDeamonReady ? SerializedBoolean.TRUE : SerializedBoolean.FALSE
+      ],
       {
         detached: true,
         stdio: 'ignore',
@@ -152,10 +179,3 @@ const createDeamon = async (options: ConnectOptions) =>
       }
     });
   });
-
-const deamonIsReady = (client: any) => new Promise(
-  resolve => client.on(
-    `message.${SocketMessageType.DEAMON_READY}`,
-    () => resolve()
-  )
-);

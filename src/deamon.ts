@@ -6,6 +6,7 @@ import { Socket } from 'net';
 import {
   SocketMessageType,
   IPCMessageType,
+  SerializedBoolean,
 } from './deamonize';
 
 const startListening = (server: any) => new Promise((resolve, reject) => {
@@ -30,19 +31,27 @@ const main = async () => {
   const [
     shellScript,
     socket,
+    waitDeamonReady
   ] = process.argv.slice(2);
 
+  const state = {
+    DeamonReady: waitDeamonReady === SerializedBoolean.FALSE
+  }
   const socketFile = xpipe.eq(socket);
   const server = new IPCServer({ socketFile: socketFile });
 
-  server.on('connection', (id: number, socket: Socket) => {
-    clientCount += 1;
+  server.on('connection', (clientId: number, socket: Socket) => {
+    if (state.DeamonReady) {
+      server.send(SocketMessageType.DEAMON_READY, undefined, clientId);
+    }
+
     socket.on('close', () => {
       clientCount += -1;
       if (clientCount <= 0) {
         server.close();
       }
     });
+    clientCount += 1;
   });
 
   server.on(`message.${SocketMessageType.CLOSE}`, () => server.close());
@@ -71,8 +80,10 @@ const main = async () => {
   proc = shell({ stdio: ['pipe', 'pipe', 'pipe', 'ipc'] }).spawn(shellScript);
 
   proc.on('message', message => {
-    if (message === IPCMessageType.DEAMON_READY)
+    if (message === IPCMessageType.DEAMON_READY) {
+      state.DeamonReady = true;
       server.broadcast(SocketMessageType.DEAMON_READY);
+    }
   });
 
   if (proc.stdout)
