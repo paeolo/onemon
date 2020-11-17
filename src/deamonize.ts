@@ -80,7 +80,7 @@ export const run = async (deamon: string, options: RunOptions) => {
     if (wait)
       await deamonIsReady;
 
-    console.log(chalk.yellow(`[ONEMON] Launching ${chalk.bold(script)}`));
+    console.log(chalk.yellow('[ONEMON] Launching script'));
 
     shell({ stdio: 'inherit', cwd: pkgScript })
       .spawn(shellScript)
