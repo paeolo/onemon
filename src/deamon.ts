@@ -20,12 +20,6 @@ const main = async () => {
   let proc: ChildProcess;
   let clientCount = 0;
 
-  // NOTE:
-  // By default, attach() will intercept signals, exceptions,
-  // unhandled rejections, and end of execution events.
-  exits.attach();
-  exits.add(async () => server.close());
-
   const xpipe = require('xpipe');
   const IPCServer = require('@crussell52/socket-ipc').Server;
   const [
@@ -64,7 +58,8 @@ const main = async () => {
 
   await startListening(server);
 
-  console.log(`IPC listening on ${socket}`);
+  exits.attach();
+  exits.add(() => server.close());
 
   if (process.send)
     process.send(IPCMessageType.SERVER_READY);

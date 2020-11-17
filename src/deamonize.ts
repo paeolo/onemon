@@ -80,7 +80,7 @@ export const run = async (deamon: string, options: RunOptions) => {
     if (wait)
       await deamonIsReady;
 
-    console.log(chalk.yellow(`[ONEMON] Launching '${script}'`));
+    console.log(chalk.yellow(`[ONEMON] Launching ${chalk.bold(script)}`));
 
     shell({ stdio: 'inherit', cwd: pkgScript })
       .spawn(shellScript)
@@ -88,7 +88,7 @@ export const run = async (deamon: string, options: RunOptions) => {
   }
 
   client.on('disconnect', () => {
-    console.log(`IPC disconnected from ${socket}`)
+    console.log(chalk.yellow(`[ONEMON] IPC disconnected from ${socket}`))
   });
 }
 
@@ -96,7 +96,7 @@ export const kill = async (deamon: string) => {
   const pkg = await getPKG(deamon);
   const socket = getSocketName(deamon);
 
-  const client = await connectToDeamon({ socket, pkg, deamon, retry: false });
+  const [client] = await connectToDeamon({ socket, pkg, deamon, retry: false });
 
   exits.attach();
   exits.add(() => client.close());
