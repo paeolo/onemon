@@ -1,42 +1,34 @@
 import * as exits from 'exits';
-import shell from './shell';
-
 import { ChildProcess } from 'child_process';
 import { Socket } from 'net';
+
+import runner from './runner';
 import {
   SocketMessageType,
   IPCMessageType,
   SerializedBoolean,
 } from './deamonize';
-
-const startListening = (server: any) => new Promise((resolve, reject) => {
-  server.on('listening', () => resolve());
-  server.on('error', (err: Error) => reject(err));
-
-  server.listen();
-});
+import { IPCServer } from './ipc-server';
 
 const main = async () => {
   let proc: ChildProcess;
   let clientCount = 0;
 
-  const xpipe = require('xpipe');
-  const IPCServer = require('@crussell52/socket-ipc').Server;
   const [
-    shellScript,
-    socket,
+    deamonPath,
+    socketPath,
     waitDeamonReady
   ] = process.argv.slice(2);
 
   const state = {
     DeamonReady: waitDeamonReady === SerializedBoolean.FALSE
   }
-  const socketFile = xpipe.eq(socket);
-  const server = new IPCServer({ socketFile: socketFile });
 
-  server.on('connection', (clientId: number, socket: Socket) => {
+  const server = new IPCServer({ socketPath });
+
+  server.on('connection', (clientId: string, socket: Socket) => {
     if (state.DeamonReady) {
-      server.send(SocketMessageType.DEAMON_READY, undefined, clientId);
+      server.send(clientId, SocketMessageType.DEAMON_READY, undefined);
     }
 
     socket.on('close', () => {
@@ -56,7 +48,7 @@ const main = async () => {
     process.exit();
   });
 
-  await startListening(server);
+  await server.listen();
 
   exits.attach();
   exits.add(() => server.close());
@@ -72,7 +64,8 @@ const main = async () => {
     1000
   );
 
-  proc = shell({ stdio: ['pipe', 'pipe', 'pipe', 'ipc'] }).spawn(shellScript);
+  proc = runner({ detached: true, stdio: 'pipe', })
+    .fork(deamonPath, []);
 
   proc.on('message', message => {
     if (message === IPCMessageType.DEAMON_READY) {

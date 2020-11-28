@@ -2,6 +2,7 @@ import path from 'path';
 import assert from 'assert';
 import crypto from 'crypto';
 import findUp from 'find-up';
+import fs from 'fs';
 
 export const getPKG = async (script: string) => {
 
@@ -32,14 +33,15 @@ export const getShellScript = (pkg: string, script: string) => {
   return pkgJSON.scripts[script];
 }
 
-export const getHash = (deamon: string) => {
+export const getHash = (value: string) => {
   return crypto
     .createHash('sha1')
-    .update(deamon)
+    .update(value)
     .digest('hex')
     .substring(0, 10);
 }
 
-export const getSocketName = (deamon: string) => {
-  return `.onemon.${getHash(deamon)}.socket`
+export const getSocketName = (filePath: string) => {
+  fs.accessSync(filePath, fs.constants.F_OK);
+  return `onemon.${getHash(path.resolve(filePath))}.socket`
 }
