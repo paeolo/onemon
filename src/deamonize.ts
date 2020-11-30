@@ -69,16 +69,20 @@ export const run = async (deamonPath: string, options: RunOptions) => {
   exits.attach();
   exits.add(() => client.close());
 
+  client.on('disconnect', () => {
+    console.log(chalk.yellow(`[ONEMON] IPC disconnected from ${socketName}`))
+  });
+
   if (!silent) {
     client.on(`message.${SocketMessageType.PRINT}`, (message: any) => {
       process.stdout.write(Buffer.from(message.data))
     });
   }
 
-  if (script) {
-    if (wait)
-      await deamonReady;
+  if (wait)
+    await deamonReady;
 
+  if (script) {
     console.log(chalk.yellow('[ONEMON] Launching script'));
 
     if (pkgScript) {
@@ -90,11 +94,9 @@ export const run = async (deamonPath: string, options: RunOptions) => {
         .fork(script, [])
         .on('exit', (code: number) => exits.terminate('exit', code));
     }
+  } else if (wait) {
+    console.log(chalk.yellow('[ONEMON] Notified ready'));
   }
-
-  client.on('disconnect', () => {
-    console.log(chalk.yellow(`[ONEMON] IPC disconnected from ${socketName}`))
-  });
 }
 
 export const kill = async (deamonPath: string) => {
