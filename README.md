@@ -32,13 +32,15 @@ onemon [deamon-script] <script>
 
 ### What can be scripts?
 
-- For the deamon, you can only use a .js file.
-- For the script, you can either use a .js file, or a script entry from a package.json
+- For the deamon, you can only use a .js file path.
+- For the script, you can either use a .js file path, or a script entry from the nearest package.json
 
 ### Flags
 
-- --silent (-s) |> Don't attach to the deamon output.
-- --wait (-w) |> Wait for the deamon to call notifyReady() before launching the script.
+| name  | shortcut | description |
+| ------------- | ------------- | ------------- |
+| silent  | -s  | Don't attach to the deamon output. |
+| wait  | -w  | Wait for the deamon to call notifyReady() before launching the script.  |
 
 ### Using it programmatically
 
