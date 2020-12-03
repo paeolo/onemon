@@ -4,7 +4,7 @@
 
 > A CLI to help you share a deamon between your scripts
 
-Onemon has been created to fill a gap in the complex tooling world of javascript. When you have a monorepo, you may want to share a watcher between all your processes.
+onemon has been created to fill a gap in the complex tooling world of javascript. When you have a monorepo, you may want to share a watcher between all your processes.
 
  Of course you can do this by creating a vscode task like one that will launch `tsc --watch` in the background but maybe you want something more generic: a task that will launch both an instance of the watcher and your process in the same process.
 
