@@ -46,6 +46,13 @@ onemon [deamon-script] <script>
 
 The main function is exported so instead of using the CLI you can use onemon in your own code programmatically and we encourage you to do this.
 
+## Can I test it?
+- clone the repository
+- execute `yarn install`, `yarn build` and `yarn link` or install `onemon` globally from the npm registry.
+- execute `onemon examples/deamon.js` on one terminal
+- execute `onemon examples/deamon.js script` on another terminal
+- play with the flags and use more terminals
+
 ## Author
 
 👤 **Paul Le Couteur**
