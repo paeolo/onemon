@@ -34,6 +34,10 @@ onemon [deamon-script] <script>
 - --silent (-s) |> Don't attach to the deamon output.
 - --wait (-w) |> Wait for the deamon to call notifyReady() before launching the script.
 
+### Using it programmatically
+
+The main function is exported so instead of using the CLI you can use onemon in your own code programmatically and we encourage you to do this.
+
 ## Author
 
 👤 **Paul Le Couteur**
