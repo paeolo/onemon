@@ -32,8 +32,8 @@ onemon [deamon-script] <script>
 
 ### What can be scripts?
 
-- For the deamon, you can only use a .js file path.
-- For the script, you can either use a .js file path, or a script entry from the nearest package.json
+- For the deamon, you can only use a `.js` file path.
+- For the script, you can either use a `.js` file path, or a `script entry` from the nearest package.json
 
 ### Flags
 
