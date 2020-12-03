@@ -44,7 +44,8 @@ onemon [deamon-script] <script>
 
 ### Using it programmatically
 
-The main function is exported so instead of using the CLI you can use onemon in your own code programmatically and we encourage you to do this.
+- The main function is exported so instead of using the CLI you can use onemon in your own code programmatically and we encourage you to do this.
+- A notifyReady function is exported that you can use on your deamon so it notifies onemon that an event happened, like a succeed built.
 
 ## Can I test it?
 - clone the repository
