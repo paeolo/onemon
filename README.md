@@ -25,10 +25,10 @@ onemon [deamon-script] <script>
 
 ### The only deamon
 
-- onemon starts your deamon-script as a deamon, if it's not already started.
-- onemon attach to a socket opened by the deamon, so you can watch your deamon output.
-- onemon starts your script if you provided one.
-- when no script using `onemon deamon-script ...` is running, onemon kill your one deamon.
+- onemon `starts` your `deamon-script` .js as a deamon, if it's not already started.
+- onemon `attach` to a socket opened by the deamon, so you can watch your deamon output.
+- onemon `starts` your script if you provided one.
+- when no script using `onemon deamon-script ...` is running, onemon `kills` your one deamon.
 
 ### What can be scripts?
 
