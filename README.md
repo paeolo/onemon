@@ -1,5 +1,5 @@
 # Welcome to onemon 👋
-![Version](https://img.shields.io/badge/version-1.2.1-red.svg?cacheSeconds=2592000)
+![Version](https://img.shields.io/badge/version-1.2.2-red.svg?cacheSeconds=2592000)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#)
 
 > A CLI to help you share a deamon between your scripts
