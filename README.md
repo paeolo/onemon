@@ -7,7 +7,7 @@
 ## Install
 
 ```sh
-yarn add global onemon
+yarn global add onemon
 ```
 
 ## Usage
