@@ -49,11 +49,14 @@ class Runner {
     })
   }
 
-  public fork(filePath: string, args: string[]) {
+  public fork(filePath: string, args: string[], forceColor?: boolean) {
     return fork(
       filePath,
       args,
       {
+        env: {
+          FORCE_COLOR: forceColor ? '1' : undefined
+        },
         detached: this.detached,
         stdio: this.stdio,
         cwd: this.cwd,

@@ -1,4 +1,7 @@
+const chalk = require('chalk');
 const { notifyReady } = require('../dist/');
+
+console.log(chalk.red('Youpi!'));
 
 console.log('--')
 console.log(`Hi there, I am a deamon from hell, cursed to count sheeps until the world end.`)

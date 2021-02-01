@@ -17,12 +17,14 @@ const main = async () => {
   const [
     deamonPath,
     socketPath,
-    waitDeamonReady
+    waitDeamonReady,
+    supportsColor
   ] = process.argv.slice(2);
 
+  const forceColor = supportsColor === SerializedBoolean.TRUE;
   const state = {
     DeamonReady: waitDeamonReady === SerializedBoolean.FALSE
-  }
+  };
 
   const server = new IPCServer({ socketPath });
 
@@ -65,7 +67,7 @@ const main = async () => {
   );
 
   proc = runner({ detached: true, stdio: 'pipe', })
-    .fork(deamonPath, []);
+    .fork(deamonPath, [], forceColor);
 
   proc.on('message', message => {
     if (message === IPCMessageType.DEAMON_READY) {
@@ -75,7 +77,10 @@ const main = async () => {
   });
 
   if (proc.stdout)
-    proc.stdout.on('data', chunk => server.broadcast(SocketMessageType.PRINT, chunk));
+    proc.stdout.on(
+      'data',
+      chunk => server.broadcast(SocketMessageType.PRINT, chunk)
+    );
 }
 
 if (require.main === module) {

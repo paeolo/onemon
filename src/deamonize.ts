@@ -1,6 +1,6 @@
 import path from 'path';
-import fs from 'fs';
 import chalk from 'chalk';
+import supportsColor from 'supports-color';
 import * as exits from 'exits';
 
 import runner from './runner';
@@ -169,7 +169,8 @@ const createDeamon = async (options: ConnectOptions) =>
         [
           resolved,
           socketPath,
-          waitDeamonReady ? SerializedBoolean.TRUE : SerializedBoolean.FALSE
+          waitDeamonReady ? SerializedBoolean.TRUE : SerializedBoolean.FALSE,
+          supportsColor.stdout ? SerializedBoolean.TRUE : SerializedBoolean.FALSE
         ]
       );
 
