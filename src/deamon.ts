@@ -23,13 +23,13 @@ const main = async () => {
 
   const forceColor = supportsColor === SerializedBoolean.TRUE;
   const state = {
-    DeamonReady: waitDeamonReady === SerializedBoolean.FALSE
+    ready: waitDeamonReady === SerializedBoolean.FALSE
   };
 
   const server = new IPCServer({ socketPath });
 
   server.on('connection', (clientId: string, socket: Socket) => {
-    if (state.DeamonReady) {
+    if (state.ready) {
       server.send(clientId, SocketMessageType.DEAMON_READY, undefined);
     }
 
@@ -45,8 +45,9 @@ const main = async () => {
   server.on(`message.${SocketMessageType.CLOSE}`, () => server.close());
 
   server.on('close', () => {
-    if (proc)
+    if (proc !== undefined) {
       proc.kill();
+    }
     process.exit();
   });
 
@@ -55,8 +56,9 @@ const main = async () => {
   exits.attach();
   exits.add(() => server.close());
 
-  if (process.send)
+  if (process.send) {
     process.send(IPCMessageType.SERVER_READY);
+  }
 
   setTimeout(
     () => {
@@ -66,21 +68,33 @@ const main = async () => {
     1000
   );
 
-  proc = runner({ detached: true, stdio: 'pipe', })
-    .fork(deamonPath, [], forceColor);
+  proc = runner({ detached: true, stdio: 'pipe', }).fork(deamonPath, [], forceColor);
 
   proc.on('message', message => {
-    if (message === IPCMessageType.DEAMON_READY) {
-      state.DeamonReady = true;
-      server.broadcast(SocketMessageType.DEAMON_READY);
+    if (message !== IPCMessageType.DEAMON_READY) {
+      return;
     }
+    state.ready = true;
+    server.broadcast(SocketMessageType.DEAMON_READY);
   });
 
-  if (proc.stdout)
+  proc.on('exit', () => {
+    server.close();
+  });
+
+  if (proc.stderr) {
+    proc.stderr.on(
+      'data',
+      chunk => server.broadcast(SocketMessageType.ERROR, chunk)
+    );
+  }
+
+  if (proc.stdout) {
     proc.stdout.on(
       'data',
       chunk => server.broadcast(SocketMessageType.PRINT, chunk)
     );
+  }
 }
 
 if (require.main === module) {

@@ -1,6 +1,6 @@
 {
   "name": "onemon",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Run a npm script as a deamon, once",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -13,6 +13,7 @@ import { IPCClient } from './ipc-client';
 
 export const enum SocketMessageType {
   PRINT = 'PRINT',
+  ERROR = 'ERROR',
   CLOSE = 'CLOSE',
   DEAMON_READY = 'DEAMON_READY'
 };
@@ -74,6 +75,10 @@ export const run = async (deamonPath: string, options: RunOptions) => {
   });
 
   if (!silent) {
+    client.on(`message.${SocketMessageType.ERROR}`, (message: any) => {
+      process.stdout.write(Buffer.from(message.data))
+    });
+
     client.on(`message.${SocketMessageType.PRINT}`, (message: any) => {
       process.stdout.write(Buffer.from(message.data))
     });
